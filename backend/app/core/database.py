@@ -51,6 +51,7 @@ def init_db() -> None:
         input_job,
         meal_log,
         pantry_item,
+        plan_run,
         profile,
         receipt_event,
         recommendation,

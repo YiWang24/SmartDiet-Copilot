@@ -244,6 +244,7 @@ Families:
 - auth/profile/goals
 - inputs (fridge/meal/receipt/chat)
 - planning and replanning
+- planner run tracing
 - recommendation output surfaces
 - feedback and loop continuation
 

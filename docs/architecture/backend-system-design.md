@@ -101,7 +101,7 @@ Why this shape for hackathon:
 
 ## 7. Security and Compliance Baseline
 
-- Cognito bearer token verification at API boundary.
+- Cognito JWT verification at API boundary (JWKS signature validation).
 - No secrets in repository; use environment contract.
 - PII minimization in logs (mask email/image URLs where needed).
 - Basic rate limiting and payload size guards for image endpoints (implementation phase).

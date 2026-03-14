@@ -81,6 +81,11 @@ Base prefix: `/api/v1`
 - Auth: required.
 - Response: `RecommendationBundle`.
 
+### `GET /planner/runs/latest/{user_id}`
+- Purpose: fetch latest planner run trace and execution mode (`adk` or `fallback`).
+- Auth: required.
+- Response: run metadata (`run_id`, `status`, `mode`, `trace_notes`, `recommendation_id`, timestamps).
+
 ## 4. Output Views
 
 ### `GET /planner/recommendations/{recommendation_id}/recipe`

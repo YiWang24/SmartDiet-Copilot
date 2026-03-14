@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     cognito_client_secret: str = Field(default="", alias="COGNITO_CLIENT_SECRET")
     cognito_issuer: str = Field(default="", alias="COGNITO_ISSUER")
     cognito_user_pool_arn: str = Field(default="", alias="COGNITO_USER_POOL_ARN")
+    cognito_jwks_url: str = Field(default="", alias="COGNITO_JWKS_URL")
 
     recipe_api_base_url: str = Field(default="", alias="RECIPE_API_BASE_URL")
     recipe_api_key: str = Field(default="", alias="RECIPE_API_KEY")

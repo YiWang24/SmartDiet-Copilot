@@ -4,9 +4,9 @@ This backend hosts the MVP APIs for **Eco-Health Agentic Dietitian**.
 
 ## Current Status
 
-- API scaffolding is in place for hackathon MVP contracts.
-- Endpoint handlers are placeholders where business logic is not yet implemented.
-- Core docs are in `/docs` and should be treated as the source of truth.
+- Backend MVP flows are implemented end-to-end for hackathon demo.
+- Agent workflow supports ADK execution with safe fallback mode.
+- Core docs in `/docs` are aligned with implemented contracts.
 
 ## Setup
 
