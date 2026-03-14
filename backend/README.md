@@ -44,3 +44,13 @@ Required contract (MVP):
 
 - If `ADK_ENABLED=true` and `GEMINI_API_KEY` is set, planner routes use Google ADK orchestrator.
 - If ADK is disabled/unavailable, planner automatically falls back to deterministic local workflow.
+
+## Recipe API Integration
+
+TheMealDB integration uses free endpoints in this order:
+
+1. `filter.php?i=<ingredient>` for candidate IDs (single-ingredient free tier)
+2. `lookup.php?i=<idMeal>` for full meal details
+3. `search.php?s=<query>` and `random.php` as fallback
+
+Parsed fields include recipe id, category, area, thumbnail, source links, and ingredient-measure pairs.

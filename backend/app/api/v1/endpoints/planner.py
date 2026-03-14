@@ -13,6 +13,7 @@ from app.models.plan_run import PlanRun
 from app.models.recommendation import Recommendation
 from app.schemas.auth import AuthContext
 from app.schemas.contracts import PlanRequest, RecommendationBundle
+from app.services.planner import extract_recipe_metadata, retrieve_recipe_candidate
 from app.services.planner_context import build_effective_plan_request
 from app.services.user_context import ensure_user
 
@@ -57,6 +58,9 @@ async def create_recommendation(
 
     try:
         recommendation, trace_notes, mode = workflow.recommend(effective_request)
+        selected_recipe = retrieve_recipe_candidate(effective_request.inventory)
+        recipe_metadata = extract_recipe_metadata(selected_recipe)
+
         rec = Recommendation(
             user_id=current_user.user_id,
             recipe_title=recommendation.recipe_title,
@@ -65,6 +69,7 @@ async def create_recommendation(
             substitutions=recommendation.substitutions,
             spoilage_alerts=recommendation.spoilage_alerts,
             grocery_gap=[item.model_dump() for item in recommendation.grocery_gap],
+            recipe_metadata=recipe_metadata,
         )
         db.add(rec)
         db.flush()
@@ -92,7 +97,7 @@ async def create_recommendation(
 
 @router.post("/recommendations/{recommendation_id}/replan", response_model=RecommendationBundle)
 async def replan_recommendation(
-    recommendation_id: str,
+        recommendation_id: str,
     current_user: AuthContext = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> RecommendationBundle:
@@ -102,15 +107,16 @@ async def replan_recommendation(
     if original.user_id != current_user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden recommendation scope")
 
-    replanned = Recommendation(
-        user_id=current_user.user_id,
-        recipe_title=f"{original.recipe_title} (Replan)",
-        steps=original.steps,
-        nutrition_summary=original.nutrition_summary,
-        substitutions=original.substitutions,
-        spoilage_alerts=original.spoilage_alerts,
-        grocery_gap=original.grocery_gap,
-    )
+        replanned = Recommendation(
+            user_id=current_user.user_id,
+            recipe_title=f"{original.recipe_title} (Replan)",
+            steps=original.steps,
+            nutrition_summary=original.nutrition_summary,
+            substitutions=original.substitutions,
+            spoilage_alerts=original.spoilage_alerts,
+            grocery_gap=original.grocery_gap,
+            recipe_metadata=original.recipe_metadata,
+        )
     db.add(replanned)
     db.commit()
     db.refresh(replanned)
@@ -169,7 +175,12 @@ async def get_recipe_detail(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found")
     if rec.user_id != current_user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden recommendation scope")
-    return {"recommendation_id": rec.id, "recipe_title": rec.recipe_title, "steps": rec.steps}
+    return {
+        "recommendation_id": rec.id,
+        "recipe_title": rec.recipe_title,
+        "steps": rec.steps,
+        "recipe_metadata": rec.recipe_metadata or {},
+    }
 
 
 @router.get("/recommendations/{recommendation_id}/nutrition")

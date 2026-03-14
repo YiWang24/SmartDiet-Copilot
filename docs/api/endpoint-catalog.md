@@ -91,6 +91,8 @@ Base prefix: `/api/v1`
 ### `GET /planner/recommendations/{recommendation_id}/recipe`
 - Purpose: fetch recipe detail.
 - Auth: required.
+- Response: includes `recipe_title`, `steps`, and `recipe_metadata` fields parsed from TheMealDB:
+  - `recipe_id`, `category`, `area`, `tags`, `thumbnail_url`, `youtube_url`, `source_url`, `ingredient_details`.
 
 ### `GET /planner/recommendations/{recommendation_id}/nutrition`
 - Purpose: fetch nutrition summary.

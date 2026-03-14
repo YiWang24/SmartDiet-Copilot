@@ -22,4 +22,5 @@ class Recommendation(Base):
     substitutions: Mapped[list[str]] = mapped_column(JSON, default=list)
     spoilage_alerts: Mapped[list[str]] = mapped_column(JSON, default=list)
     grocery_gap: Mapped[list[dict]] = mapped_column(JSON, default=list)
+    recipe_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

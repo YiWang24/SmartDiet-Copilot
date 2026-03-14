@@ -5,7 +5,12 @@ from __future__ import annotations
 from typing import Any
 
 from app.schemas.contracts import InventorySnapshot
-from app.services.planner import calculate_nutrition, generate_grocery_gap, retrieve_recipe_candidate
+from app.services.planner import (
+    calculate_nutrition,
+    generate_grocery_gap,
+    retrieve_recipe_candidate,
+    retrieve_recipe_candidates as retrieve_recipe_candidates_service,
+)
 
 
 def analyze_fridge_vision(image_url: str, detected_items: list[dict[str, Any]] | None = None) -> dict[str, Any]:
@@ -48,13 +53,15 @@ def parse_receipt_items(image_url: str, items: list[dict[str, Any]] | None = Non
     return {"image_url": image_url, "items": parsed}
 
 
-def retrieve_recipe_candidates(inventory: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Get best recipe candidate from external provider with fallback."""
+def retrieve_recipe_candidates(inventory: dict[str, Any] | None = None, limit: int = 5) -> dict[str, Any]:
+    """Get recipe candidates from TheMealDB and return selected + ranked list."""
 
     snapshot = None
     if inventory:
         snapshot = InventorySnapshot.model_validate(inventory)
-    return retrieve_recipe_candidate(snapshot)
+    candidates = retrieve_recipe_candidates_service(snapshot, limit=limit)
+    selected = candidates[0] if candidates else retrieve_recipe_candidate(snapshot)
+    return {"selected": selected, "candidates": candidates}
 
 
 def calculate_meal_macros(recipe: dict[str, Any], inventory: dict[str, Any] | None = None) -> dict[str, Any]:

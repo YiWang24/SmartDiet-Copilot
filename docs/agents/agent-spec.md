@@ -102,6 +102,7 @@ Input:
 Output:
 
 - top-N candidate recipes with source metadata
+- parsed fields include: `idMeal`, `strMeal`, `strCategory`, `strArea`, `strMealThumb`, `strYoutube`, `strSource`, and normalized `ingredient + measure` pairs
 
 Failure mode:
 

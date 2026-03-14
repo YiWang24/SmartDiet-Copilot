@@ -45,6 +45,7 @@ async def patch_recommendation_feedback(
             substitutions=rec.substitutions,
             spoilage_alerts=rec.spoilage_alerts,
             grocery_gap=rec.grocery_gap,
+            recipe_metadata=rec.recipe_metadata,
         )
         db.add(replanned)
         db.flush()

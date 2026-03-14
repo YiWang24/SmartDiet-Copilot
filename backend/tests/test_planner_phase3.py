@@ -62,5 +62,7 @@ def test_planner_detail_views(client: TestClient) -> None:
     assert gap.status_code == 200
 
     assert recipe.json()["recipe_title"]
+    assert "recipe_metadata" in recipe.json()
+    assert "ingredient_details" in recipe.json()["recipe_metadata"]
     assert nutrition.json()["calories"] >= 1
     assert isinstance(gap.json(), list)
