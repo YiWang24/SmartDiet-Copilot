@@ -44,6 +44,16 @@ def get_db() -> Generator[Session, None, None]:
 def init_db() -> None:
     """Create tables for MVP runtime."""
 
-    from app.models import chat_message, goal, input_job, meal_log, pantry_item, profile, receipt_event, user  # noqa: F401
+    from app.models import (  # noqa: F401
+        chat_message,
+        goal,
+        input_job,
+        meal_log,
+        pantry_item,
+        profile,
+        receipt_event,
+        recommendation,
+        user,
+    )
 
     Base.metadata.create_all(bind=engine)
