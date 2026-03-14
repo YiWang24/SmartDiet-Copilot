@@ -149,6 +149,11 @@ Frontend:
 6. Send feedback patch (accept/reject + message).
 7. Trigger replan and show updated recommendation.
 
+### Demo Helpers
+
+- Seed dataset: `backend/scripts/demo_seed.json`
+- One-command walkthrough (server must be running): `backend/scripts/run_demo_flow.sh`
+
 ## Video Demo Link
 
 - Placeholder: `TBD_BEFORE_SUBMISSION`

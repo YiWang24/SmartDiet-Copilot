@@ -1,0 +1,70 @@
+{
+  "user_id": "demo-user-001",
+  "profile": {
+    "age": 28,
+    "height_cm": 172,
+    "weight_kg": 68,
+    "activity_level": "moderate",
+    "dietary_preferences": ["high-protein"],
+    "allergies": ["peanut"],
+    "cook_time_preference_minutes": 20
+  },
+  "goals": {
+    "calories_target": 2200,
+    "protein_g_target": 140,
+    "carbs_g_target": 230,
+    "fat_g_target": 70,
+    "dietary_restrictions": ["no-shellfish"],
+    "allergies": ["peanut"],
+    "budget_limit": 30,
+    "max_cook_time_minutes": 25
+  },
+  "fridge_scan": {
+    "image_url": "https://example.com/demo-fridge.jpg",
+    "detected_items": [
+      {"ingredient": "spinach", "quantity": "1 bunch", "expires_in_days": 1},
+      {"ingredient": "tofu", "quantity": "400g", "expires_in_days": 2}
+    ]
+  },
+  "meal_scan": {
+    "image_url": "https://example.com/demo-meal.jpg",
+    "meal_name": "oat bowl",
+    "calories": 350,
+    "protein_g": 16,
+    "carbs_g": 48,
+    "fat_g": 9
+  },
+  "receipt_scan": {
+    "image_url": "https://example.com/demo-receipt.jpg",
+    "items": [
+      {"ingredient": "tomato", "quantity": "4", "expires_in_days": 4},
+      {"ingredient": "onion", "quantity": "2", "expires_in_days": 7}
+    ]
+  },
+  "chat_message": {
+    "message": "Make it under 600 calories and use expiring items first"
+  },
+  "plan_request": {
+    "constraints": {
+      "calories_target": 2200,
+      "protein_g_target": 140,
+      "carbs_g_target": 230,
+      "fat_g_target": 70,
+      "dietary_restrictions": ["no-shellfish"],
+      "allergies": ["peanut"],
+      "budget_limit": 30,
+      "max_cook_time_minutes": 25
+    },
+    "inventory": {
+      "items": [
+        {"ingredient": "spinach", "quantity": "1 bunch", "expires_in_days": 1},
+        {"ingredient": "tofu", "quantity": "400g", "expires_in_days": 2}
+      ]
+    },
+    "user_message": "Use ingredients that expire soon"
+  },
+  "feedback": {
+    "action": "reject",
+    "message": "Lower calories and keep prep under 15 minutes"
+  }
+}

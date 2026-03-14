@@ -6,10 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.database import init_db
+from app.core.observability import setup_observability
 
 settings = get_settings()
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
+setup_observability(app)
 
 app.add_middleware(
     CORSMiddleware,
