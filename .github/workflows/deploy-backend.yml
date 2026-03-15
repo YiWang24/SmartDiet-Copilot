@@ -42,7 +42,15 @@ jobs:
             cd "$APP_DIR"
             git fetch --prune origin "$BRANCH"
             git checkout "$BRANCH"
+            # Preserve runtime SQLite data before reset
+            mkdir -p /tmp/db_backup
+            cp -f backend/data/eco_health.sqlite3 /tmp/db_backup/ 2>/dev/null || true
+            # Remove untracked files that conflict with incoming git tree
+            git clean -f -- backend/data/
             git reset --hard "origin/$BRANCH"
+            # Restore production database
+            mkdir -p backend/data
+            [ -f /tmp/db_backup/eco_health.sqlite3 ] && cp /tmp/db_backup/eco_health.sqlite3 backend/data/ || true
 
             python3 -m venv .venv
             . .venv/bin/activate
