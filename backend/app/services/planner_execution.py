@@ -25,6 +25,7 @@ from app.schemas.contracts import (
     NutritionSummary,
 )
 from app.services.execution_planning import persist_execution_plan
+from app.services.planner import resolve_recipe_metadata_for_title
 from app.services.user_memory import (
     count_expiring_items_used,
     infer_used_inventory,
@@ -166,6 +167,12 @@ async def execute_plan_request(
         except Exception as exc:
             recommendation = _fallback_recommendation(request, exc)
 
+        resolved_recipe_metadata = resolve_recipe_metadata_for_title(
+            recommendation.decision.recipe_title,
+            request.inventory,
+            request.constraints,
+        )
+
         rec = Recommendation(
             user_id=request.user_id,
             recipe_title=recommendation.decision.recipe_title,
@@ -177,15 +184,15 @@ async def execute_plan_request(
             recipe_metadata={
                 "source": "railtracks-agentic",
                 "recipe_title": recommendation.decision.recipe_title,
-                "recipe_id": None,
-                "category": None,
-                "area": None,
-                "tags": [],
-                "thumbnail_url": None,
-                "youtube_url": None,
-                "source_url": None,
-                "ingredient_details": [],
-                "api_source": "railtracks",
+                "recipe_id": resolved_recipe_metadata.get("recipe_id"),
+                "category": resolved_recipe_metadata.get("category"),
+                "area": resolved_recipe_metadata.get("area"),
+                "tags": resolved_recipe_metadata.get("tags") or [],
+                "thumbnail_url": resolved_recipe_metadata.get("thumbnail_url"),
+                "youtube_url": resolved_recipe_metadata.get("youtube_url"),
+                "source_url": resolved_recipe_metadata.get("source_url"),
+                "ingredient_details": resolved_recipe_metadata.get("ingredient_details") or [],
+                "api_source": resolved_recipe_metadata.get("api_source") or "railtracks",
                 "decision_rationale": recommendation.decision.rationale,
                 "confidence": recommendation.decision.confidence,
             },

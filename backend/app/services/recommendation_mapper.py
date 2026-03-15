@@ -16,6 +16,26 @@ from app.schemas.contracts import (
 )
 
 
+_PUBLIC_RECIPE_METADATA_KEYS = {
+    "recipe_id",
+    "recipe_title",
+    "category",
+    "area",
+    "tags",
+    "thumbnail_url",
+    "youtube_url",
+    "source_url",
+    "ingredient_details",
+    "api_source",
+}
+
+
+def _public_recipe_metadata(metadata: dict) -> dict:
+    if not isinstance(metadata, dict):
+        return {}
+    return {key: metadata.get(key) for key in _PUBLIC_RECIPE_METADATA_KEYS if key in metadata}
+
+
 def recommendation_to_bundle(rec: Recommendation) -> RecommendationBundle:
     metadata = rec.recipe_metadata or {}
     bundle_payload = metadata.get("bundle_v1")
@@ -23,6 +43,8 @@ def recommendation_to_bundle(rec: Recommendation) -> RecommendationBundle:
         bundle = RecommendationBundle.model_validate(bundle_payload)
         if bundle.recommendation_id != rec.id:
             bundle.recommendation_id = rec.id
+        if not bundle.recipe_metadata:
+            bundle.recipe_metadata = _public_recipe_metadata(metadata)
         return bundle
 
     nutrition = NutritionSummary.model_validate(rec.nutrition_summary or {"calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0})
@@ -54,6 +76,7 @@ def recommendation_to_bundle(rec: Recommendation) -> RecommendationBundle:
         decision=decision,
         meal_plan=meal_plan,
         grocery_plan=grocery_plan,
+        recipe_metadata=_public_recipe_metadata(metadata),
         execution_plan=ExecutionPlanBlock.model_validate(execution_payload or {}),
         reflection=ReflectionBlock.model_validate(
             reflection_payload

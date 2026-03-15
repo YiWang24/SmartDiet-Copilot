@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from hashlib import md5
 from typing import Any
 
 import httpx
@@ -322,3 +323,73 @@ def extract_recipe_metadata(recipe: dict[str, Any]) -> dict[str, Any]:
         "ingredient_details": recipe.get("ingredient_details") or [],
         "api_source": recipe.get("api_source") or "unknown",
     }
+
+
+def _normalize_recipe_title(value: str | None) -> str:
+    if not value:
+        return ""
+    normalized = re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+    return " ".join(normalized.split())
+
+
+def _recipe_title_similarity(left: str, right: str) -> int:
+    if not left or not right:
+        return 0
+    if left == right:
+        return 100
+    if left in right or right in left:
+        return 80
+
+    left_tokens = set(left.split())
+    right_tokens = set(right.split())
+    if not left_tokens or not right_tokens:
+        return 0
+    overlap = len(left_tokens & right_tokens)
+    union = len(left_tokens | right_tokens)
+    return int((overlap / union) * 100)
+
+
+def _stable_recipe_index(seed: str, size: int) -> int:
+    if size <= 1:
+        return 0
+    digest = md5(seed.encode("utf-8"), usedforsecurity=False).hexdigest()
+    return int(digest, 16) % size
+
+
+def resolve_recipe_metadata_for_title(
+    recipe_title: str | None,
+    inventory: InventorySnapshot | None,
+    constraints: ConstraintSet | None = None,
+) -> dict[str, Any]:
+    """Resolve best-effort MealDB metadata for an AI-generated recipe title."""
+
+    normalized_target = _normalize_recipe_title(recipe_title)
+    candidates = retrieve_recipe_candidates(inventory, constraints=constraints, limit=8)
+
+    best_candidate = None
+    best_score = 0
+    if normalized_target:
+        for candidate in candidates:
+            score = _recipe_title_similarity(
+                normalized_target,
+                _normalize_recipe_title(candidate.get("recipe_title")),
+            )
+            if score > best_score:
+                best_score = score
+                best_candidate = candidate
+
+    if best_candidate and best_score >= 35:
+        return extract_recipe_metadata(best_candidate)
+
+    if recipe_title and settings.recipe_api_base_url:
+        payload = _request_json("search.php", {"s": recipe_title.strip()})
+        meals = (payload or {}).get("meals") or []
+        if meals:
+            return extract_recipe_metadata(_parse_meal_detail(meals[0]))
+
+    if candidates:
+        seed = normalized_target or (recipe_title or "fallback-meal")
+        chosen = candidates[_stable_recipe_index(seed, len(candidates))]
+        return extract_recipe_metadata(chosen)
+
+    return {}

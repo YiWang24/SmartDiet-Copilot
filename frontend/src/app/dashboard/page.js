@@ -19,19 +19,26 @@ import {
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80";
 
+function fallbackImageByTitle(title) {
+  const slug = encodeURIComponent((title || "recipe").trim().toLowerCase().replace(/\s+/g, "-"));
+  return `https://picsum.photos/seed/smartdiet-${slug}/800/450`;
+}
+
 function toRecipeCard(bundle) {
   const nutrition = bundle?.meal_plan?.nutrition_summary || {};
   const tasks = bundle?.execution_plan?.cooking_dag_tasks || [];
   const totalMinutes = tasks.length
     ? tasks.reduce((sum, task) => sum + (task.duration_minutes || 0), 0)
     : Math.max(10, (bundle?.meal_plan?.steps?.length || 2) * 6);
+  const title = bundle.decision?.recipe_title || "Suggested meal";
+  const thumbnailUrl = bundle?.recipe_metadata?.thumbnail_url;
 
   return {
     id: bundle.recommendation_id,
-    title: bundle.decision?.recipe_title || "Suggested meal",
+    title,
     kcal: String(nutrition.calories || 0),
     time: `${totalMinutes}m`,
-    imageUrl: bundle?.recipe_metadata?.thumbnail_url || FALLBACK_IMAGE,
+    imageUrl: thumbnailUrl || fallbackImageByTitle(title) || FALLBACK_IMAGE,
   };
 }
 

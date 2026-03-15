@@ -84,6 +84,7 @@ class RecommendationBundle(BaseModel):
     decision: "DecisionBlock"
     meal_plan: "MealPlanBlock"
     grocery_plan: "GroceryPlanBlock"
+    recipe_metadata: dict[str, Any] = Field(default_factory=dict)
     execution_plan: "ExecutionPlanBlock"
     reflection: "ReflectionBlock"
     memory_updates: "MemoryUpdatesBlock"
