@@ -25,6 +25,7 @@ const SCAN_TABS = [
   { id: TAB_MEAL, label: "Scan Meal", icon: "photo_camera" },
   { id: TAB_RECEIPT, label: "Scan Receipt", icon: "receipt" },
 ];
+const SCAN_JOB_TIMEOUT_MS = 120000;
 
 function resolveTab(value) {
   if (value === TAB_FRIDGE || value === TAB_MEAL || value === TAB_RECEIPT) {
@@ -261,7 +262,10 @@ export default function UnifiedScanPage() {
     setNotice("");
     try {
       const envelope = await submitFridgeScan({ image_url: fridgeImageUrl, detected_items: [] });
-      const job = await pollInputJob(envelope.job_id, { timeoutMs: 15000, intervalMs: 700 });
+      const job = await pollInputJob(envelope.job_id, {
+        timeoutMs: SCAN_JOB_TIMEOUT_MS,
+        intervalMs: 700,
+      });
       if (job.status !== "COMPLETED") {
         throw new Error("Fridge scan failed");
       }
@@ -284,7 +288,10 @@ export default function UnifiedScanPage() {
         image_url: mealImageUrl,
         meal_name: mealName || "Logged meal",
       });
-      const job = await pollInputJob(envelope.job_id, { timeoutMs: 15000, intervalMs: 700 });
+      const job = await pollInputJob(envelope.job_id, {
+        timeoutMs: SCAN_JOB_TIMEOUT_MS,
+        intervalMs: 700,
+      });
       if (job.status !== "COMPLETED") {
         throw new Error("Meal scan failed");
       }
@@ -304,7 +311,10 @@ export default function UnifiedScanPage() {
     setNotice("");
     try {
       const envelope = await submitReceiptScan({ image_url: receiptImageUrl, items: [] });
-      const job = await pollInputJob(envelope.job_id, { timeoutMs: 15000, intervalMs: 700 });
+      const job = await pollInputJob(envelope.job_id, {
+        timeoutMs: SCAN_JOB_TIMEOUT_MS,
+        intervalMs: 700,
+      });
       if (job.status !== "COMPLETED") {
         throw new Error("Receipt scan failed");
       }
