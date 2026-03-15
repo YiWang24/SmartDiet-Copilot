@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import Icon from "@/components/ui/Icon";
+import { useToastFeedback } from "@/hooks/useToastFeedback";
 import { getRecommendation } from "@/lib/api";
 
 export default function RecipeDetailPage() {
@@ -12,6 +13,7 @@ export default function RecipeDetailPage() {
   const [bundle, setBundle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  useToastFeedback({ error });
 
   useEffect(() => {
     let active = true;
@@ -57,8 +59,8 @@ export default function RecipeDetailPage() {
           Loading recipe details...
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+        <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+          Recipe details are temporarily unavailable.
         </div>
       ) : (
         <>

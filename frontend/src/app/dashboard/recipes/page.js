@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import RecipeCard from "@/components/dashboard/RecipeCard";
 import EmptyState from "@/components/ui/EmptyState";
+import { useToastFeedback } from "@/hooks/useToastFeedback";
 import { getCurrentUserId, getRecommendationHistory } from "@/lib/api";
 import { getRecipeFallbackImage } from "@/utils/recipeImages";
 
@@ -30,6 +31,7 @@ export default function RecipesPage() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  useToastFeedback({ error });
 
   useEffect(() => {
     let active = true;
@@ -58,16 +60,13 @@ export default function RecipesPage() {
   return (
     <div className="mx-auto w-full max-w-[760px] flex flex-col gap-6 py-8 px-4">
       <h1 className="text-2xl font-black tracking-tight">Recipes</h1>
-
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
       {loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
           Loading recipe history...
+        </div>
+      ) : error ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+          Recipe history is temporarily unavailable.
         </div>
       ) : cards.length === 0 ? (
         <EmptyState

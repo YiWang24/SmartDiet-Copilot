@@ -8,6 +8,7 @@ import QuickActions from "@/components/dashboard/QuickActions";
 import SmartSuggestion from "@/components/dashboard/SmartSuggestion";
 import RecipeCard from "@/components/dashboard/RecipeCard";
 import EmptyState from "@/components/ui/EmptyState";
+import { useToastFeedback } from "@/hooks/useToastFeedback";
 import { ROUTES } from "@/lib/constants";
 import { calculateNutritionTargets, inferGoalType } from "@/lib/nutrition-targets.mjs";
 import { getRecipeFallbackImage } from "@/utils/recipeImages";
@@ -53,6 +54,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  useToastFeedback({
+    error,
+    clearError: () => setError(""),
+  });
 
   useEffect(() => {
     let active = true;
@@ -209,13 +214,6 @@ export default function DashboardPage() {
       </section>
 
       <QuickActions />
-
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">Smart Suggestions</h2>
         <SmartSuggestion

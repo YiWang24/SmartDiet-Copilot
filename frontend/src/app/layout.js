@@ -1,4 +1,5 @@
 import { Inter } from "next/font/google";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,7 +23,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased font-display">
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

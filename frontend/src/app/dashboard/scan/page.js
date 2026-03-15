@@ -6,6 +6,7 @@ import CameraFrame from "@/components/scan/CameraFrame";
 import DetectedIngredientList from "@/components/scan/DetectedIngredientList";
 import FreshnessLegend from "@/components/scan/FreshnessLegend";
 import Icon from "@/components/ui/Icon";
+import { useToastFeedback } from "@/hooks/useToastFeedback";
 import {
   clearPantry,
   createRecommendation,
@@ -189,6 +190,12 @@ export default function UnifiedScanPage() {
   const [clearingAll, setClearingAll] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  useToastFeedback({
+    error,
+    clearError: () => setError(""),
+    notice,
+    clearNotice: () => setNotice(""),
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -398,18 +405,6 @@ export default function UnifiedScanPage() {
           />
         ))}
       </div>
-
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-      {notice && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {notice}
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {activeTab === TAB_FRIDGE && (
           <>

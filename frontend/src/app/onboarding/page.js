@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Icon from "@/components/ui/Icon";
 import ProgressStepper from "@/components/onboarding/ProgressStepper";
+import { useToastFeedback } from "@/hooks/useToastFeedback";
 import {
   getCurrentUserId,
   getGoals,
@@ -124,6 +125,10 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [authorized, setAuthorized] = useState(false);
+  useToastFeedback({
+    error,
+    clearError: () => setError(""),
+  });
 
   useEffect(() => {
     if (!hasAuthSession()) {
@@ -570,12 +575,6 @@ export default function OnboardingPage() {
                     {saving ? "Saving..." : loading ? "Loading..." : "Create My Nutrition Profile"}
                   </button>
                 </div>
-
-                {error && (
-                  <div className="mt-5 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                    {error}
-                  </div>
-                )}
               </section>
             </form>
           </div>

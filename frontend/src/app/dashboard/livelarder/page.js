@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
+import { useToastFeedback } from "@/hooks/useToastFeedback";
 import { getPantry, getSpoilageAlerts } from "@/lib/api";
 import { ROUTES } from "@/lib/constants";
 
@@ -21,6 +22,10 @@ export default function LivelarderPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  useToastFeedback({
+    error,
+    clearError: () => setError(""),
+  });
 
   useEffect(() => {
     let active = true;
@@ -64,13 +69,6 @@ export default function LivelarderPage() {
           <Icon name="menu_book" className="text-sm" /> Recipes
         </Link>
       </nav>
-
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 relative min-h-[320px]">
           <div

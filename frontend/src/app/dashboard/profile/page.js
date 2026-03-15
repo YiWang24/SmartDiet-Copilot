@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
+import { useToastFeedback } from "@/hooks/useToastFeedback";
 import { clearAuthSession, getCurrentUserId, getGoals, getProfile } from "@/lib/api";
 import { ROUTES } from "@/lib/constants";
 
@@ -12,6 +13,7 @@ export default function ProfilePage() {
   const [goals, setGoals] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  useToastFeedback({ error });
 
   useEffect(() => {
     let active = true;
@@ -73,8 +75,8 @@ export default function ProfilePage() {
           Loading profile...
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+        <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+          Profile is temporarily unavailable. Please retry in a moment.
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-4">
