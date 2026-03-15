@@ -293,18 +293,20 @@ export default function ChatPage() {
       {/* Footer */}
       <footer className="flex-shrink-0 border-t border-slate-100 bg-white/90 backdrop-blur px-4 pt-2.5 pb-4 space-y-2">
         {/* Quick prompts */}
-        <div className="flex gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {quickPrompts.map((prompt) => (
-            <button
-              key={prompt}
-              type="button"
-              onClick={() => handleSend(prompt)}
-              disabled={sending}
-              className="shrink-0 text-xs px-3 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 font-medium hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {prompt}
-            </button>
-          ))}
+        <div className="max-w-2xl mx-auto">
+          <div className="flex gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {quickPrompts.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => handleSend(prompt)}
+                disabled={sending}
+                className="shrink-0 text-xs px-3 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 font-medium hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Input */}
