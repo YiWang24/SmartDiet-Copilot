@@ -1,46 +1,44 @@
 # Eco-Health Agentic Dietitian
 
-An agentic, multimodal dietitian assistant that helps users eat healthier, reduce food waste, and lower grocery spend.
+An **agentic multimodal AI dietitian assistant** that helps users eat healthier, reduce food waste, and lower grocery spending.
 
 ## Project Inspiration
 
-People want healthier eating and a lower environmental footprint, but daily food decisions are hard in practice. Most apps track past behavior but do not actively help with what to cook now, what to buy next, or what will spoil soon.
+Many people want to eat healthier, waste less food, and reduce their environmental footprint.  
+Yet one simple question remains surprisingly difficult to answer every day: **“What should I eat today?”**
 
-## Problem
+Food decisions are highly personal. The right choice depends on individual health goals, dietary restrictions, available ingredients, cooking time, and budget. However, most nutrition tools provide **generic recommendations** and mainly track what you have already eaten.
 
-Current nutrition workflows are fragmented:
+They rarely help users decide **what to cook next**, especially based on what is already in the fridge or what ingredients may expire soon.
 
-- Users manually log meals with high friction.
-- Households forget purchased ingredients and waste food.
-- Nutrition goals, budget, time, and sustainability are rarely optimized together.
+As a result, everyday food decisions often lead to **less healthy meals, wasted ingredients, and unnecessary grocery spending.**
 
-This creates three recurring outcomes: weaker nutrition adherence, higher food waste, and avoidable grocery costs.
+## Our Solution 
 
-## Main Idea
+Build an **Agentic AI Dietitian** that understands a user's real food environment.
 
-Build an **Agentic AI Personal Dietitian** that continuously reasons over:
+The system continuously reasons over:
 
-- what users bought (receipt scans)
-- what users have (fridge scans)
-- what users ate (meal scans)
-- what users want (goals, constraints, chat feedback)
+- what users **bought** (receipt scans)
+- what users **have** (fridge scans)
+- what users **ate** (meal scans)
+- what users **want** (goals and chat feedback)
 
-The system outputs actionable meal strategy, not passive tracking.
+Instead of passive tracking, the agent generates **actionable meal plans and decision guidance**.
 
-## Solution
+## System Overview
 
 This repository is a backend-first MVP using FastAPI + Railtracks architecture. The agent combines multimodal perception, user memory, constraint solving, recipe retrieval, and reflection checks to produce grounded recommendations with grocery optimization.
 
 ## User Journey Map
 
-Sign Up -> Set Goals -> Scan Fridge / Scan Meal / Scan Grocery Receipt / Send Chat Message -> Agent Loop -> Recipe + Advice + Grocery List -> User Feedback -> Agent Replans Automatically
+Sign Up and Set Goals -> Input Context -> Agent Loop -> Detailed Meal Plan Output -> User Feedback -> Agent Replans Automatically
 
-1. **Sign Up**: User profile and baseline health context (age, height, weight, activity, preferences, allergies).
-2. **Set Goals**: Targets for calories, macros, restrictions, budget, and cook time.
-3. **Provide Context**: User submits fridge image, meal image, receipt image, and optional chat instructions.
-4. **Agent Loop**: System perceives, reasons over constraints, retrieves recipe knowledge, and generates strategy.
-5. **Receive Output**: Recipe recommendation, instructions, nutrition breakdown, substitutions, spoilage alerts, grocery gap.
-6. **Feedback Loop**: User requests changes (for example, vegetarian, lower calories, 15-minute cook time), and agent replans.
+1. **Sign Up and Set Goals**: User profile and baseline health context (age, height, weight, activity, preferences, allergies). Set personal health goals for targeted calories, macro composition. Define food restrictions, budget and time availability etc. 
+2. **Provide Context**: User submits fridge image, meal image, receipt image, and optional chat instructions.
+3. **Agent Loop**: System perceives, reasons over constraints, retrieves recipe knowledge, and generates strategy.
+4. **Receive Output**: Recipe recommendation, instructions, nutrition breakdown, substitutions, spoilage alerts, grocery gap.
+5. **Feedback Loop**: User requests changes (for example, vegetarian, lower calories, 15-minute cook time), and agent replans.
 
 ## Core Features (MVP vs Next)
 
@@ -171,7 +169,10 @@ Frontend:
 
 ## Future Work
 
-- Unified impact dashboard (health + climate ROI).
-- External calendar integrations and bi-directional sync.
-- Advanced prep-task optimization from real availability signals.
-- Better retrieval quality with hybrid local + external recipe retrieval.
+- **Expand multimodal inputs:** integrate wearable health data (sleep, steps, heart rate) and lab results.
+- **Refine recipe retrieval:** improve recipe diversity, filtering, and portion control.
+- **Calendar integrations:** bi-directional sync for meal prep scheduling and grocery planning.
+- **Shopping integration:** automatically order missing ingredients or suggest local alternatives.
+- **Social features:** share meal plans and sustainability progress with friends.
+
+
