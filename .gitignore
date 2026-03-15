@@ -28,3 +28,8 @@ htmlcov/
 .pytest_cache/
 .vercel
 .env*.local
+
+# Backend runtime state
+backend/data/
+backend/chroma_db/
+backend/.railtracks/
