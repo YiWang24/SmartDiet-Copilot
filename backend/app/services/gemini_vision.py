@@ -84,7 +84,7 @@ def _normalize_model_resource(model_name: str) -> str:
     if model.startswith("gemini/"):
         model = model.split("/", 1)[1]
     if not model:
-        model = "gemini-2.5-flash"
+        model = "gemini-2.5-pro"
     return f"models/{model}"
 
 
