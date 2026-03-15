@@ -86,6 +86,33 @@ def test_e2e_06_chat_message_persist_and_latest_read(client: TestClient, auth_he
     events = latest.json()
     assert len(events) >= 1
     assert events[0]["message"] == "Make it vegetarian and under 500 calories"
+    assert events[0]["role"] == "user"
+
+
+def test_e2e_06_chat_auto_replan_persists_assistant_turn(client: TestClient, auth_headers) -> None:
+    """Chat with auto_replan stores assistant turn and recommendation for history reload."""
+
+    user_id = "journey-chat-2"
+    headers = auth_headers(user_id)
+
+    post = client.post(
+        "/api/v1/inputs/chat-message?auto_replan=true",
+        json={"message": "I only have 15 minutes, suggest a quick meal"},
+        headers=headers,
+    )
+    assert post.status_code == 200
+    body = post.json()
+    assert body["assistant_message"]
+    assert body["recommendation"]["recommendation_id"]
+
+    latest = client.get("/api/v1/inputs/chat-messages/latest?limit=10", headers=headers)
+    assert latest.status_code == 200
+    events = latest.json()
+    assert len(events) >= 2
+    assert events[0]["role"] == "assistant"
+    assert events[0]["recommendation_id"] == body["recommendation"]["recommendation_id"]
+    assert events[1]["role"] == "user"
+    assert events[1]["message"] == "I only have 15 minutes, suggest a quick meal"
 
 
 def test_scope_enforced_for_profile_user_id(client: TestClient, auth_headers) -> None:

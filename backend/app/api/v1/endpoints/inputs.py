@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.chat_message import ChatMessage
+from app.models.chat_turn import ChatTurn
 from app.models.input_job import InputJob
 from app.models.meal_log import MealLog
 from app.models.pantry_item import PantryItem
@@ -98,6 +99,21 @@ def _create_input_job(
     background_tasks.add_task(process_input_job, job.id)
 
     return JobEnvelope(job_id=job.id, status=JobStatus.PENDING)
+
+
+def _format_assistant_message(recommendation: RecommendationBundle | None) -> str:
+    if not recommendation:
+        return "Message received. Share more constraints and I can generate a full meal plan."
+
+    nutrition = recommendation.meal_plan.nutrition_summary
+    return "\n".join(
+        [
+            f"Recommendation: {recommendation.decision.recipe_title or 'Suggested meal'}",
+            recommendation.decision.rationale
+            or "Generated based on your latest profile and pantry data.",
+            f"Nutrition: {nutrition.calories or 0} kcal • {nutrition.protein_g or 0}g protein",
+        ]
+    )
 
 
 @router.post("/fridge-scan", response_model=JobEnvelope, status_code=status.HTTP_202_ACCEPTED)
@@ -236,11 +252,18 @@ async def submit_chat_message(
     ensure_user(db, current_user)
 
     event = ChatMessage(user_id=current_user.user_id, message=payload.message)
-    db.add(event)
+    user_turn = ChatTurn(
+        user_id=current_user.user_id,
+        role="user",
+        message=payload.message,
+        recommendation_id=None,
+    )
+    db.add_all([event, user_turn])
     db.commit()
     db.refresh(event)
 
     recommendation: RecommendationBundle | None = None
+    assistant_message: str | None = None
     if auto_replan:
         base_request = build_effective_plan_request(
             db,
@@ -253,11 +276,21 @@ async def submit_chat_message(
         )
         rec = await execute_plan_request(db=db, request=base_request, trigger="chat_auto_replan")
         recommendation = recommendation_to_bundle(rec)
+        assistant_message = _format_assistant_message(recommendation)
+        assistant_turn = ChatTurn(
+            user_id=current_user.user_id,
+            role="assistant",
+            message=assistant_message,
+            recommendation_id=recommendation.recommendation_id,
+        )
+        db.add(assistant_turn)
+        db.commit()
 
     return ChatMessageResponse(
         event_id=event.id,
         user_id=event.user_id,
         message=event.message,
+        assistant_message=assistant_message,
         recommendation=recommendation,
     )
 
@@ -268,6 +301,60 @@ async def get_latest_chat_messages(
     current_user: AuthContext = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[ChatMessageEvent]:
+    turns = (
+        db.execute(
+            select(ChatTurn)
+            .where(ChatTurn.user_id == current_user.user_id)
+            .order_by(ChatTurn.created_at.desc(), ChatTurn.id.desc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
+    if turns:
+        rows = [
+            ChatMessageEvent(
+                event_id=event.id,
+                user_id=event.user_id,
+                role="assistant" if event.role == "assistant" else "user",
+                source="turn",
+                message=event.message,
+                created_at=event.created_at,
+                recommendation_id=event.recommendation_id,
+            )
+            for event in turns
+        ]
+        if len(rows) < limit:
+            oldest_turn_at = turns[-1].created_at
+            legacy_events = (
+                db.execute(
+                    select(ChatMessage)
+                    .where(
+                        ChatMessage.user_id == current_user.user_id,
+                        ChatMessage.created_at < oldest_turn_at,
+                    )
+                    .order_by(ChatMessage.created_at.desc())
+                    .limit(limit - len(rows))
+                )
+                .scalars()
+                .all()
+            )
+            rows.extend(
+                [
+                    ChatMessageEvent(
+                        event_id=event.id,
+                        user_id=event.user_id,
+                        role="user",
+                        source="legacy",
+                        message=event.message,
+                        created_at=event.created_at,
+                        recommendation_id=None,
+                    )
+                    for event in legacy_events
+                ]
+            )
+        return rows[:limit]
+
     events = (
         db.execute(
             select(ChatMessage)
@@ -282,8 +369,11 @@ async def get_latest_chat_messages(
         ChatMessageEvent(
             event_id=event.id,
             user_id=event.user_id,
+            role="user",
+            source="legacy",
             message=event.message,
             created_at=event.created_at,
+            recommendation_id=None,
         )
         for event in events
     ]

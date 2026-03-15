@@ -1,16 +1,28 @@
 const DEFAULT_BACKEND_ORIGIN = "http://localhost:8000";
+const PRODUCTION_BACKEND_ORIGIN = "https://genai.yiw.me";
 const DEFAULT_USER_ID = "demo-user";
 const AUTH_SESSION_STORAGE_KEY = "agentic_auth_session_v1";
 
+function isLikelyHostedFrontend() {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname || "";
+  return host && host !== "localhost" && host !== "127.0.0.1";
+}
+
 function normalizeBaseUrl() {
-  const configured = (process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_BACKEND_ORIGIN).trim();
-  if (!configured) {
-    return `${DEFAULT_BACKEND_ORIGIN}/api/v1`;
+  const configured = (process.env.NEXT_PUBLIC_API_BASE_URL || "").trim();
+  if (configured) {
+    if (configured.endsWith("/api/v1")) {
+      return configured;
+    }
+    return `${configured.replace(/\/$/, "")}/api/v1`;
   }
-  if (configured.endsWith("/api/v1")) {
-    return configured;
+
+  if (process.env.NODE_ENV === "production" || isLikelyHostedFrontend()) {
+    return `${PRODUCTION_BACKEND_ORIGIN}/api/v1`;
   }
-  return `${configured.replace(/\/$/, "")}/api/v1`;
+
+  return `${DEFAULT_BACKEND_ORIGIN}/api/v1`;
 }
 
 export const API_BASE_URL = normalizeBaseUrl();
@@ -140,21 +152,45 @@ function buildHeaders(hasJsonBody = false) {
 
 async function request(path, { method = "GET", body, cache = "no-store" } = {}) {
   const hasBody = body !== undefined;
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers: buildHeaders(hasBody),
-    body: hasBody ? JSON.stringify(body) : undefined,
-    cache,
-  });
+  const url = `${API_BASE_URL}${path}`;
+  const timeoutMs = method === "GET" ? 30000 : 120000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  let response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers: buildHeaders(hasBody),
+      body: hasBody ? JSON.stringify(body) : undefined,
+      cache,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`Request timeout after ${Math.round(timeoutMs / 1000)}s`);
+    }
+    const detail = error instanceof Error ? error.message : "Unknown network error";
+    throw new Error(
+      `Failed to fetch. Please verify backend reachability/CORS for ${API_BASE_URL}. ${detail}`
+    );
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (response.status === 204) {
     return null;
   }
 
-  const payload = await response.json().catch(() => null);
+  const contentType = response.headers.get("content-type") || "";
+  const payload = contentType.includes("application/json")
+    ? await response.json().catch(() => null)
+    : null;
+  const textPayload = payload ? "" : await response.text().catch(() => "");
+
   if (!response.ok) {
     const detail =
       (payload && (payload.detail || payload.message)) ||
+      textPayload.trim() ||
       `HTTP ${response.status}: ${response.statusText}`;
     throw new Error(detail);
   }

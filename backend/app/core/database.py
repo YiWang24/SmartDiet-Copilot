@@ -143,6 +143,7 @@ def init_db() -> None:
     from app.models import (  # noqa: F401
         calendar_block,
         chat_message,
+        chat_turn,
         cooking_task,
         feedback_event,
         goal,

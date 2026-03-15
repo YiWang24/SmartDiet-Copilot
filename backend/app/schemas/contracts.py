@@ -238,14 +238,18 @@ class ChatMessageResponse(BaseModel):
     event_id: int
     user_id: str
     message: str
+    assistant_message: str | None = None
     recommendation: RecommendationBundle | None = None
 
 
 class ChatMessageEvent(BaseModel):
     event_id: int
     user_id: str
+    role: Literal["user", "assistant"] = "user"
+    source: Literal["turn", "legacy"] = "legacy"
     message: str
     created_at: datetime
+    recommendation_id: str | None = None
 
 
 class FeedbackResponse(BaseModel):
