@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }) {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[linear-gradient(160deg,_#ecfdf5_0%,_#f7fdf9_40%,_#f0fdf4_100%)]">
       <Header variant="dashboard" />
       <main className="mx-auto flex w-full flex-1 flex-col p-6 pb-24">
         {children}
