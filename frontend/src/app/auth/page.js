@@ -167,9 +167,9 @@ export default function AuthPage() {
               <input
                 type="text"
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm tracking-widest text-center text-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="000000"
+                placeholder="00000000"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 required
@@ -177,7 +177,7 @@ export default function AuthPage() {
             </label>
             <button
               type="submit"
-              disabled={loading || code.length < 6}
+              disabled={loading || code.length < 8}
               className="w-full rounded-xl bg-primary text-white font-bold py-3 disabled:opacity-60 transition-opacity"
             >
               {loading ? "Verifying..." : "Sign in"}

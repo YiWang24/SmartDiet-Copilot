@@ -74,7 +74,7 @@ class OtpRequestSchema(BaseModel):
 
 class OtpVerifyRequest(BaseModel):
     email: str = Field(..., min_length=5, max_length=320)
-    code: str = Field(..., min_length=1, max_length=20)
+    code: str = Field(..., min_length=6, max_length=8)
     session: str = Field(..., min_length=10)
 
     @field_validator("email")
