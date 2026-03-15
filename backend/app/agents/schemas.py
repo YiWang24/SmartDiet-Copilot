@@ -26,10 +26,10 @@ class RtGroceryItem(BaseModel):
 
 class RtNutritionSummary(BaseModel):
     """Railtracks nutrition summary schema."""
-    calories: int
-    protein_g: int
-    carbs_g: int
-    fat_g: int
+    calories: int = 0
+    protein_g: int = 0
+    carbs_g: int = 0
+    fat_g: int = 0
 
 
 class RtRecommendationOutput(BaseModel):

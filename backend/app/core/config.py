@@ -31,9 +31,9 @@ class Settings(BaseSettings):
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     railtracks_enabled: bool = Field(default=False, alias="RAILTRACKS_ENABLED")
     railtracks_base_url: str = Field(default="", alias="RAILTRACKS_BASE_URL")
-    railtracks_model: str = Field(default="gemini-2.5-flash", alias="RAILTRACKS_MODEL")
-    gemini_model: str = Field(default="gemini-2.5-flash", alias="GEMINI_MODEL")
-    gemini_vision_model: str = Field(default="gemini-2.5-flash", alias="GEMINI_VISION_MODEL")
+    railtracks_model: str = Field(default="gemini-2.5-pro", alias="RAILTRACKS_MODEL")
+    gemini_model: str = Field(default="gemini-2.5-pro", alias="GEMINI_MODEL")
+    gemini_vision_model: str = Field(default="gemini-2.5-pro", alias="GEMINI_VISION_MODEL")
     gemini_embedding_model: str = Field(
         default="gemini-embedding-001", alias="GEMINI_EMBEDDING_MODEL"
     )

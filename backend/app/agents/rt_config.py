@@ -53,7 +53,7 @@ def _normalize_llm_model_name(name: str) -> str:
         model_name = model_name.split("/", 1)[1]
     if model_name.startswith("gemini/"):
         model_name = model_name.split("/", 1)[1]
-    return model_name or "gemini-2.5-flash"
+    return model_name or "gemini-2.5-pro"
 
 
 def _normalize_embedding_model_name(name: str) -> str:

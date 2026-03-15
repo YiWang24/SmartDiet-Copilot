@@ -308,19 +308,22 @@ class RAGPipeline:
         query_parts = []
 
         if inventory and inventory.items:
-            # Prioritize expiring ingredients
-            expiring = [
-                item.ingredient
-                for item in inventory.items
-                if item.expires_in_days is not None and item.expires_in_days <= 3
-            ]
+            # Separate critical-expiry from general inventory
+            expiring = sorted(
+                [item for item in inventory.items if item.expires_in_days is not None and item.expires_in_days <= 3],
+                key=lambda x: x.expires_in_days or 999,
+            )
             if expiring:
-                query_parts.append(f"recipes using expiring ingredients {', '.join(expiring[:3])}")
+                names = ", ".join(item.ingredient for item in expiring[:4])
+                query_parts.append(f"healthy recipe using {names}")
 
-            # Add other available ingredients
-            available = [item.ingredient for item in inventory.items[:5]]
-            if available:
-                query_parts.append(f"with {', '.join(available)}")
+            # Add other available ingredients for broader context
+            non_expiring = [
+                item.ingredient for item in inventory.items
+                if item.expires_in_days is None or item.expires_in_days > 3
+            ]
+            if non_expiring:
+                query_parts.append(f"also has {', '.join(non_expiring[:4])}")
 
         if constraints:
             if constraints.dietary_restrictions:

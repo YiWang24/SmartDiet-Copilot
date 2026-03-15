@@ -64,10 +64,26 @@ class RailtracksAgenticWorkflow:
 
     def _build_agent(self):
         instruction = (
-            "You are Eco-Health Agentic Dietitian planner. "
-            "Given user constraints, prioritized ingredients, retrieved context, and a candidate recipe, "
-            "produce strict JSON fields: recipe_title, steps, substitutions, spoilage_alerts, grocery_gap, "
-            "nutrition_summary, rationale, confidence."
+            "You are SmartDiet Copilot, an expert AI dietitian meal planner. "
+            "Your core priorities, in strict order:\n"
+            "1. HONOR the user's explicit request (user_message) — this is the primary intent.\n"
+            "2. USE expiring ingredients first — any item with expires_in_days <= 3 MUST appear in the recipe.\n"
+            "3. MINIMIZE grocery gap — prefer recipes that use what is already in inventory.\n"
+            "4. ENFORCE constraints — allergies and dietary_restrictions are hard rules; never violate them.\n"
+            "5. PROVIDE accurate nutrition — estimate calories, protein, carbs, fat realistically for the recipe.\n\n"
+            "Output ONLY valid JSON with these exact fields:\n"
+            "{\n"
+            '  "recipe_title": "string — specific dish name",\n'
+            '  "steps": ["step 1", "step 2", ...],\n'
+            '  "substitutions": ["ingredient swap suggestion if needed"],\n'
+            '  "spoilage_alerts": ["Use <ingredient> within X days"],\n'
+            '  "grocery_gap": [{"ingredient": "name", "reason": "why needed"}],\n'
+            '  "nutrition_summary": {"calories": int, "protein_g": int, "carbs_g": int, "fat_g": int},\n'
+            '  "rationale": "1-2 sentences explaining why this recipe fits the request and inventory",\n'
+            '  "confidence": 0.0-1.0\n'
+            "}\n"
+            "Set confidence >= 0.8 only when the recipe directly uses expiring ingredients AND satisfies user_message. "
+            "If no good match exists, pick the closest recipe and explain the gap in rationale."
         )
         tools = [
             retrieve_recipe_candidates,
@@ -147,20 +163,28 @@ class RailtracksAgenticWorkflow:
     def prioritize(request: PlanRequest) -> dict[str, Any]:
         """Prioritize stage: identify spoilage and hard constraints."""
 
-        expiring = []
+        expiring_critical: list[str] = []
+        expiring_soon: list[str] = []
         if request.inventory and request.inventory.items:
-            expiring = sorted(
-                [
-                    item.ingredient
-                    for item in request.inventory.items
-                    if item.expires_in_days is not None and item.expires_in_days <= 2
-                ]
-            )
+            for item in request.inventory.items:
+                if item.expires_in_days is None or not item.ingredient:
+                    continue
+                if item.expires_in_days <= 1:
+                    expiring_critical.append(item.ingredient)
+                elif item.expires_in_days <= 3:
+                    expiring_soon.append(item.ingredient)
+            expiring_critical = sorted(expiring_critical)
+            expiring_soon = sorted(expiring_soon)
+
         return {
-            "expiring_ingredients": expiring[:5],
+            "expiring_critical": expiring_critical[:5],   # must use today
+            "expiring_soon": expiring_soon[:8],            # should use this week
+            "expiring_ingredients": expiring_critical[:5] + expiring_soon[:5],
             "allergies": request.constraints.allergies,
             "dietary_restrictions": request.constraints.dietary_restrictions,
             "max_cook_time_minutes": request.constraints.max_cook_time_minutes,
+            "calories_target": request.constraints.calories_target,
+            "user_message": request.user_message,
         }
 
     def retrieve_context(self, request: PlanRequest, priority_signals: dict[str, Any]) -> list[dict[str, Any]]:
@@ -220,13 +244,14 @@ class RailtracksAgenticWorkflow:
             raise ValueError("No Railtracks response content produced")
 
         parsed = self._parse_railtracks_output(content)
+        from app.schemas.contracts import NutritionSummary
         bundle = AgentDraftBundle(
             recipe_title=parsed.recipe_title,
             steps=parsed.steps,
             substitutions=parsed.substitutions,
             spoilage_alerts=parsed.spoilage_alerts,
             grocery_gap=[GroceryItem.model_validate(item.model_dump()) for item in parsed.grocery_gap],
-            nutrition_summary=parsed.nutrition_summary.model_dump(),
+            nutrition_summary=NutritionSummary.model_validate(parsed.nutrition_summary.model_dump()),
         )
         decision = {
             "rationale": parsed.rationale or parsed.confidence_note,
@@ -274,10 +299,15 @@ class RailtracksAgenticWorkflow:
             final_violations = violations
             final_decision_meta = decision_meta
 
-            if not violations:
+            confidence = decision_meta.get("confidence") or 0.0
+            if not violations and confidence >= 0.5:
                 status = "ok"
                 break
-            status = "adjusted_with_violations"
+            if violations:
+                status = "adjusted_with_violations"
+            else:
+                status = "low_confidence_retry"
+                trace_notes.append(f"low_confidence:{confidence:.2f}")
 
         if final_bundle is None:
             raise RuntimeError("Unable to formulate recommendation after retries")
@@ -358,18 +388,79 @@ class RailtracksAgenticWorkflow:
         retrieved_context: list[dict[str, Any]],
         attempt: int,
     ) -> str:
-        payload = {
-            "request": request.model_dump(),
-            "priority_signals": priority_signals,
-            "retrieved_context": retrieved_context[:3],
-            "candidate_recipe": candidate_recipe,
-            "attempt": attempt,
-        }
-        return (
-            "Generate one executable meal recommendation. "
-            "Honor constraints, minimize grocery gap, prioritize expiring ingredients. "
-            f"Payload: {json.dumps(payload, ensure_ascii=True)}"
+        lines: list[str] = []
+
+        # ── USER REQUEST (top priority) ──────────────────────────────────────
+        user_msg = request.user_message or priority_signals.get("user_message") or ""
+        if user_msg:
+            lines.append(f"## USER REQUEST\n{user_msg}")
+
+        # ── EXPIRING INGREDIENTS (must use) ──────────────────────────────────
+        critical = priority_signals.get("expiring_critical", [])
+        soon = priority_signals.get("expiring_soon", [])
+        if critical:
+            lines.append(f"## CRITICAL — USE TODAY (expires ≤1 day)\n{', '.join(critical)}")
+        if soon:
+            lines.append(f"## USE SOON (expires ≤3 days)\n{', '.join(soon)}")
+
+        # ── FULL INVENTORY ───────────────────────────────────────────────────
+        if request.inventory and request.inventory.items:
+            inv_lines = []
+            for item in request.inventory.items[:20]:
+                exp = f" (expires in {item.expires_in_days}d)" if item.expires_in_days is not None else ""
+                qty = f" — {item.quantity}" if item.quantity else ""
+                inv_lines.append(f"  • {item.ingredient}{qty}{exp}")
+            lines.append("## AVAILABLE INVENTORY\n" + "\n".join(inv_lines))
+
+        # ── CONSTRAINTS ──────────────────────────────────────────────────────
+        constraints_parts: list[str] = []
+        if priority_signals.get("allergies"):
+            constraints_parts.append(f"Allergies (NEVER include): {', '.join(priority_signals['allergies'])}")
+        if priority_signals.get("dietary_restrictions"):
+            constraints_parts.append(f"Dietary restrictions: {', '.join(priority_signals['dietary_restrictions'])}")
+        if priority_signals.get("max_cook_time_minutes"):
+            constraints_parts.append(f"Max cook time: {priority_signals['max_cook_time_minutes']} minutes")
+        if priority_signals.get("calories_target"):
+            constraints_parts.append(f"Calorie target: {priority_signals['calories_target']} kcal")
+        if constraints_parts:
+            lines.append("## CONSTRAINTS\n" + "\n".join(constraints_parts))
+
+        # ── CANDIDATE RECIPE ─────────────────────────────────────────────────
+        if candidate_recipe:
+            recipe_summary = {
+                "title": candidate_recipe.get("recipe_title"),
+                "ingredients": candidate_recipe.get("ingredients", [])[:15],
+                "steps_preview": (candidate_recipe.get("steps") or candidate_recipe.get("instructions", ""))[:300],
+                "category": candidate_recipe.get("category"),
+            }
+            lines.append(f"## CANDIDATE RECIPE (adapt or replace if poor fit)\n{json.dumps(recipe_summary, ensure_ascii=True)}")
+
+        # ── RAG CONTEXT ──────────────────────────────────────────────────────
+        relevant = [
+            ctx.get("recipe_title") or ctx.get("full_recipe", {}).get("recipe_title")
+            for ctx in retrieved_context[:3]
+            if ctx.get("recipe_title") or (ctx.get("full_recipe") or {}).get("recipe_title")
+        ]
+        if relevant:
+            lines.append(f"## OTHER RELEVANT RECIPES (use for inspiration if candidate is poor fit)\n{', '.join(filter(None, relevant))}")
+
+        # ── ATTEMPT NOTE ─────────────────────────────────────────────────────
+        if attempt > 1:
+            lines.append(
+                f"## RETRY ATTEMPT {attempt}\n"
+                "Previous attempt had low confidence. Choose a DIFFERENT recipe that better uses "
+                "the expiring ingredients and directly answers the user request."
+            )
+
+        # ── FINAL INSTRUCTION ────────────────────────────────────────────────
+        lines.append(
+            "## TASK\n"
+            "Choose the BEST recipe given the above context. If the candidate recipe fits well, adapt it. "
+            "If it conflicts with constraints or ignores expiring ingredients, REPLACE it with a better option.\n"
+            "Return ONLY the JSON object — no markdown, no explanation outside the JSON."
         )
+
+        return "\n\n".join(lines)
 
 @lru_cache(maxsize=1)
 def get_railtracks_workflow() -> RailtracksAgenticWorkflow:
