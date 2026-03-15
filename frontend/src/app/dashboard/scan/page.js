@@ -398,19 +398,68 @@ export default function UnifiedScanPage() {
                 />
               </div>
             </section>
-            <aside className="lg:col-span-5">
+            <aside className="lg:col-span-5 flex flex-col gap-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
                 <h3 className="text-base font-bold">Latest Meal Result</h3>
                 {!latestMeal ? (
                   <p className="text-sm text-slate-500">No meal parsed in this session yet.</p>
                 ) : (
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex justify-between"><span>Meal</span><strong>{latestMeal.meal_name || "-"}</strong></li>
-                    <li className="flex justify-between"><span>Calories</span><strong>{latestMeal.calories || 0} kcal</strong></li>
-                    <li className="flex justify-between"><span>Protein</span><strong>{latestMeal.protein_g || 0} g</strong></li>
-                    <li className="flex justify-between"><span>Carbs</span><strong>{latestMeal.carbs_g || 0} g</strong></li>
-                    <li className="flex justify-between"><span>Fat</span><strong>{latestMeal.fat_g || 0} g</strong></li>
-                  </ul>
+                  <>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex justify-between">
+                        <span className="text-slate-500">Meal</span>
+                        <strong className="text-right max-w-[60%]">{latestMeal.meal_name || "-"}</strong>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-slate-500">Calories</span>
+                        <strong>{latestMeal.calories || 0} kcal</strong>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-slate-500">Protein</span>
+                        <strong>{latestMeal.protein_g || 0} g</strong>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-slate-500">Carbs</span>
+                        <strong>{latestMeal.carbs_g || 0} g</strong>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-slate-500">Fat</span>
+                        <strong>{latestMeal.fat_g || 0} g</strong>
+                      </li>
+                    </ul>
+
+                    {latestMeal.highlights?.length > 0 && (
+                      <div className="pt-3 border-t border-slate-100 space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                          What&apos;s Great
+                        </p>
+                        <ul className="space-y-1.5">
+                          {latestMeal.highlights.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                              <Icon name="check_circle" className="text-emerald-500 text-base mt-0.5 shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {latestMeal.suggestions?.length > 0 && (
+                      <div className="pt-3 border-t border-slate-100 space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">
+                          Suggestions
+                        </p>
+                        <ul className="space-y-1.5">
+                          {latestMeal.suggestions.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                              <Icon name="lightbulb" className="text-amber-500 text-base mt-0.5 shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </aside>

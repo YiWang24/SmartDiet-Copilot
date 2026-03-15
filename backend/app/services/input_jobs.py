@@ -100,6 +100,8 @@ def process_input_job(job_id: str) -> None:
             result["protein_g"] = int(meal.protein_g or 0)
             result["carbs_g"] = int(meal.carbs_g or 0)
             result["fat_g"] = int(meal.fat_g or 0)
+            result["highlights"] = parsed.get("highlights") or []
+            result["suggestions"] = parsed.get("suggestions") or []
 
         elif job.input_type == "receipt_scan":
             parsed = parse_receipt_items(payload.get("image_url", ""), payload.get("items"))

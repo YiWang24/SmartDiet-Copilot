@@ -207,12 +207,23 @@ def parse_fridge_ingredients_with_gemini(image_ref: str) -> list[dict[str, Any]]
 
 
 def parse_meal_with_gemini(image_ref: str) -> dict[str, Any] | None:
-    """Parse meal image and estimate nutrition fields using Gemini Vision."""
+    """Parse meal image, estimate nutrition, and produce dietary analysis using Gemini Vision."""
 
     prompt = (
-        "Identify the meal and estimate macros. "
-        "Return strict JSON object with keys: meal_name, calories, protein_g, carbs_g, fat_g. "
-        "All macro values must be integers."
+        "You are a registered dietitian analyzing a meal photo. "
+        "Identify the dish and estimate its nutritional content. "
+        "Return a strict JSON object with EXACTLY these keys:\n"
+        '  "meal_name": string — specific dish name\n'
+        '  "calories": integer — total estimated kcal\n'
+        '  "protein_g": integer — grams of protein\n'
+        '  "carbs_g": integer — grams of carbohydrates\n'
+        '  "fat_g": integer — grams of fat\n'
+        '  "highlights": array of 2-3 short strings — genuine nutritional strengths '
+        "(e.g. 'Rich in lean protein', 'Good source of fiber', 'Low saturated fat')\n"
+        '  "suggestions": array of 2-3 short strings — actionable improvements '
+        "(e.g. 'Add leafy greens for micronutrients', 'Swap white rice for brown rice', "
+        "'Reduce portion size to lower calories')\n"
+        "All macro values must be positive integers. highlights and suggestions must each have 2-3 items."
     )
     payload = _generate_structured_json(image_ref, prompt)
     if not payload:
@@ -227,12 +238,25 @@ def parse_meal_with_gemini(image_ref: str) -> dict[str, Any] | None:
         except Exception:
             return default
 
+    def _safe_str_list(value: Any, default: list[str]) -> list[str]:
+        if not isinstance(value, list):
+            return default
+        return [str(item).strip() for item in value if str(item).strip()][:3] or default
+
     return {
         "meal_name": meal_name or "recognized meal",
         "calories": _safe_int(payload.get("calories"), 520),
         "protein_g": _safe_int(payload.get("protein_g"), 28),
         "carbs_g": _safe_int(payload.get("carbs_g"), 46),
         "fat_g": _safe_int(payload.get("fat_g"), 20),
+        "highlights": _safe_str_list(
+            payload.get("highlights"),
+            ["Provides essential macronutrients", "Balanced meal composition"],
+        ),
+        "suggestions": _safe_str_list(
+            payload.get("suggestions"),
+            ["Add more vegetables for fiber and vitamins", "Consider portion size for calorie goals"],
+        ),
     }
 
 
