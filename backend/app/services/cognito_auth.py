@@ -185,7 +185,33 @@ def cognito_request_email_otp(email: str, settings: Settings) -> dict:
         },
         settings,
     )
-    return {"session": data.get("Session"), "challenge_name": data.get("ChallengeName")}
+
+    challenge_name = data.get("ChallengeName")
+    session = data.get("Session")
+
+    # USER_AUTH may return SELECT_CHALLENGE when the user has multiple auth options.
+    # Respond immediately to select EMAIL_OTP so the caller gets the final OTP session.
+    if challenge_name == "SELECT_CHALLENGE":
+        select_responses: dict = {
+            "USERNAME": email,
+            "ANSWER": "EMAIL_OTP",
+        }
+        if secret_hash:
+            select_responses["SECRET_HASH"] = secret_hash
+        data = _call_cognito(
+            "RespondToAuthChallenge",
+            {
+                "ClientId": settings.cognito_client_id,
+                "ChallengeName": "SELECT_CHALLENGE",
+                "Session": session,
+                "ChallengeResponses": select_responses,
+            },
+            settings,
+        )
+        challenge_name = data.get("ChallengeName")
+        session = data.get("Session")
+
+    return {"session": session, "challenge_name": challenge_name}
 
 
 def cognito_verify_email_otp(email: str, code: str, session: str, settings: Settings) -> dict:
