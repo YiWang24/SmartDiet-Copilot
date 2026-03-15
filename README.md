@@ -124,8 +124,8 @@ The planner decides **what** to eat, and retrieval provides **how** to make it w
 ## Quick Start (backend run + frontend placeholder)
 
 ```bash
-git clone https://github.com/YiWang24/Genai.git
-cd Genai
+git clone https://github.com/YiWang24/SmartDiet-Copilot.git
+cd SmartDiet-Copilot
 ```
 
 Backend:
