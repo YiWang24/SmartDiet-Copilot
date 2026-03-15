@@ -72,6 +72,8 @@ def analyze_meal_vision(
         "protein_g": protein_g or (parsed or {}).get("protein_g") or 0,
         "carbs_g": carbs_g or (parsed or {}).get("carbs_g") or 0,
         "fat_g": fat_g or (parsed or {}).get("fat_g") or 0,
+        "highlights": (parsed or {}).get("highlights") or [],
+        "suggestions": (parsed or {}).get("suggestions") or [],
     }
 
 
